@@ -6,20 +6,17 @@ from flask import Flask, request, jsonify, url_for
 from flask_cors import CORS
 from utils import APIException, generate_sitemap
 from datastructures import FamilyStructure
-# from models import Person
 
 app = Flask(__name__)
 app.url_map.strict_slashes = False
 CORS(app)
 
 
-# create the jackson family object
 jackson_family = FamilyStructure("Jackson")
 
-# Handle/serialize errors like a JSON object
 
 initial_members = [
-    
+
     {
         "id": 1,
         "first_name": "John",
@@ -49,8 +46,6 @@ for member in initial_members:
 def handle_invalid_usage(error):
     return jsonify(error.to_dict()), error.status_code
 
-# generate sitemap with all your endpoints
-
 
 def sitemap():
     return generate_sitemap(app)
@@ -58,6 +53,7 @@ def sitemap():
 
 @app.route('/members', methods=['GET'])
 def get_members():
+    
     members = jackson_family.get_all_members()
 
     if not members:
@@ -68,6 +64,7 @@ def get_members():
 
 @app.route('/member/<int:id>', methods=['GET'])
 def get_member(id):
+    
     member = jackson_family.get_member(id)
 
     if not member:
@@ -76,31 +73,50 @@ def get_member(id):
     return jsonify(member), 200
 
 
+@app.route('/member/<int:id>', methods=['PUT'])
+def update_member(id):
+
+    if not request.json:
+        return jsonify({"message": "Invalid request data"}), 400
+    
+    update_data = request.json
+
+    success = jackson_family.edit_member(id, update_data)
+    
+    if not success:
+        return jsonify({"message": "Member not found"}), 404
+    
+    return jsonify({"message": "Member updated"}), 200
+
+
 @app.route('/member', methods=['POST'])
 def new_member():
+
+    if not request.json:
+        return jsonify({"message": "Invalid request data"}), 400
 
     the_new_member = request.json
 
     jackson_family.add_member(the_new_member)
 
-    return jsonify({"message": "Member added successfully"}), 200
+    return jsonify({"message": "Member added"}), 200
 
 
 @app.route('/member/<int:id>', methods=['DELETE'])
 def delete_member(id):
-
+    
     success = jackson_family.delete_member(id)
 
     if not success:
         return jsonify({
             "message": "Member not found",
             "done": False
-            }), 404
+        }), 404
 
     return jsonify({
         "message": "Member deleted successfully",
         "done": True
-        }), 200
+    }), 200
 
 
 # this only runs if `$ python src/app.py` is executed
