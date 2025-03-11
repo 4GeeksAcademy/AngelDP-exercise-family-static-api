@@ -19,6 +19,7 @@ jackson_family = FamilyStructure("Jackson")
 # Handle/serialize errors like a JSON object
 
 initial_members = [
+    
     {
         "id": 1,
         "first_name": "John",
@@ -39,6 +40,7 @@ initial_members = [
     }
 ]
 
+
 for member in initial_members:
     jackson_family.add_member(member)
 
@@ -56,22 +58,25 @@ def sitemap():
 
 @app.route('/members', methods=['GET'])
 def get_members():
-
-    # this is how you can use the Family datastructure by calling its methods
     members = jackson_family.get_all_members()
+
+    if not members:
+        return jsonify({"message": "we can't find the members"}), 404
 
     return jsonify(members), 200
 
 
-@app.route('/members/<int:id>', methods=['GET'])
+@app.route('/member/<int:id>', methods=['GET'])
 def get_member(id):
-
     member = jackson_family.get_member(id)
 
-    return jsonify({"message": "here is the member"}, member)
+    if not member:
+        return jsonify({"message": "we can't find the member"}), 404
+
+    return jsonify(member), 200
 
 
-@app.route('/members', methods=['POST'])
+@app.route('/member', methods=['POST'])
 def new_member():
 
     the_new_member = request.json
@@ -81,15 +86,21 @@ def new_member():
     return jsonify({"message": "Member added successfully"}), 200
 
 
-@app.route('/members/<int:id>', methods=['DELETE'])
+@app.route('/member/<int:id>', methods=['DELETE'])
 def delete_member(id):
 
     success = jackson_family.delete_member(id)
 
     if not success:
-        return jsonify({"message": "Member not found"}), 404
+        return jsonify({
+            "message": "Member not found",
+            "done": False
+            }), 404
 
-    return jsonify({"message": "Member deleted successfully"}), 200
+    return jsonify({
+        "message": "Member deleted successfully",
+        "done": True
+        }), 200
 
 
 # this only runs if `$ python src/app.py` is executed
